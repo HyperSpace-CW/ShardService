@@ -1,9 +1,11 @@
 package eu.hyperspace.ftsapp.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+@Schema(description = "DTO для отправки названия файла")
 @Data
 @AllArgsConstructor
 public class FileNameDTO {

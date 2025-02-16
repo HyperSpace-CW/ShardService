@@ -1,13 +1,11 @@
 package eu.hyperspace.ftsapp.controller;
 
-import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
-import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
@@ -16,8 +14,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public Map<String, String> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
@@ -26,26 +25,42 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        return errors;
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(FileNotFoundException.class)
-    public ResponseEntity<String> handleFileNotFoundException(FileNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public String handleFileNotFoundException(FileNotFoundException ex) {
+        return ex.getMessage();
     }
 
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(FailedToCreateBucketException.class)
-    public ResponseEntity<String> handleFailedToCreateBucketException(FailedToCreateBucketException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    public String handleFailedToCreateBucketException(FailedToCreateBucketException ex) {
+        return ex.getMessage();
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(FailedToDownloadFileException.class)
+    public String handleFailedToDownloadFileException(FailedToDownloadFileException ex) {
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(FailedToUpdateFileException.class)
+    public String handleFailedToUpdateFileException(FailedToUpdateFileException ex) {
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToDeleteFileException.class)
-    public ResponseEntity<String> handleFailedToDeleteFileException(FailedToDeleteFileException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    public String handleFailedToDeleteFileException(FailedToDeleteFileException ex) {
+        return ex.getMessage();
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToUploadFileException.class)
-    public ResponseEntity<String> handleFailedToUploadFileException(FailedToUploadFileException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    public String handleFailedToUploadFileException(FailedToUploadFileException ex) {
+        return ex.getMessage();
     }
 }

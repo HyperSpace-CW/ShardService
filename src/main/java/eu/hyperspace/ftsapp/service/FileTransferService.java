@@ -8,6 +8,8 @@ public interface FileTransferService {
 
     FileFullDataDTO uploadFile(FileFullDataDTO fileFullDataDTO);
 
+    FileFullDataDTO updateFile(FileFullDataDTO fileFullDataDTO);
+
     FileBase64DTO downloadFile(String fileName);
 
     FileNameDTO deleteFile(String fileName);

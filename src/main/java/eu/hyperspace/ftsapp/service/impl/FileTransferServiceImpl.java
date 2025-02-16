@@ -3,19 +3,19 @@ package eu.hyperspace.ftsapp.service.impl;
 import eu.hyperspace.ftsapp.dto.FileBase64DTO;
 import eu.hyperspace.ftsapp.dto.FileNameDTO;
 import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
-import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.exception.*;
 import eu.hyperspace.ftsapp.service.FileTransferService;
 import io.minio.*;
-import io.minio.errors.ErrorResponseException;
+import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Service
@@ -30,10 +30,13 @@ public class FileTransferServiceImpl implements FileTransferService {
     @Override
     public FileFullDataDTO uploadFile(FileFullDataDTO fileFullDataDTO) {
         try {
+            createBucketIfNotExists();
+
             byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
 
-            createBucketIfNotExists();
+            if (fileExists(fileFullDataDTO.getFileName()))
+                throw new FileAlreadyExistsException("file " + fileFullDataDTO.getFileName() + " already exists");
 
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -44,35 +47,58 @@ public class FileTransferServiceImpl implements FileTransferService {
             );
             return fileFullDataDTO;
         } catch (Exception e) {
-            throw new FailedToUploadFileException("Failed to upload file: " + e.getMessage() + " , error: " + e.getMessage());
+            throw new FailedToUploadFileException("Failed to upload file: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public FileFullDataDTO updateFile(FileFullDataDTO fileFullDataDTO) {
+        try {
+            if (!fileExists(fileFullDataDTO.getFileName()))
+                throw new FileNotFoundException("File " + fileFullDataDTO.getFileName() + " does not exist");
+
+            byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileFullDataDTO.getFileName())
+                            .stream(inputStream, fileBytes.length, -1)
+                            .build()
+            );
+            return fileFullDataDTO;
+        } catch (Exception e) {
+            throw new FailedToUpdateFileException("Failed to update file: " + e.getMessage());
         }
     }
 
     @Override
     public FileBase64DTO downloadFile(String fileName) {
-        try (InputStream inputStream = minioClient.getObject(
-                GetObjectArgs.builder()
-                        .bucket(bucketName)
-                        .object(fileName)
-                        .build()
-        )) {
-            byte[] fileBytes = inputStream.readAllBytes();
+        try {
+            if (!fileExists(fileName)) {
+                throw new FileNotFoundException("file " + fileName + " not found");
+            }
 
-            return new FileBase64DTO(Base64.getEncoder().encodeToString(fileBytes));
+            try (InputStream inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            )) {
+                byte[] fileBytes = inputStream.readAllBytes();
+                return new FileBase64DTO(Base64.getEncoder().encodeToString(fileBytes));
+            }
         } catch (Exception e) {
-            throw new FileNotFoundException("File " + fileName + " not found, error: " + e.getMessage());
+            throw new FailedToDownloadFileException("Failed to download file: " + e.getMessage());
         }
     }
 
     @Override
     public FileNameDTO deleteFile(String fileName) {
         try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(fileName)
-                            .build()
-            );
+            if (!fileExists(fileName))
+                throw new FileNotFoundException("file " + fileName + " does not exist");
 
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
@@ -81,14 +107,8 @@ public class FileTransferServiceImpl implements FileTransferService {
                             .build()
             );
             return new FileNameDTO(fileName);
-        } catch (ErrorResponseException e) {
-            if (e.errorResponse().code().equals("NoSuchKey")) {
-                throw new FileNotFoundException("File " + fileName + " does not exist");
-            } else {
-                throw new FailedToDeleteFileException("Failed to delete file: " + fileName + ", error: " + e.getMessage());
-            }
         } catch (Exception e) {
-            throw new FailedToDeleteFileException("Failed to delete file: " + fileName + ", error: " + e.getMessage());
+            throw new FailedToDeleteFileException("Failed to delete file: " + e.getMessage());
         }
     }
 
@@ -98,7 +118,24 @@ public class FileTransferServiceImpl implements FileTransferService {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
         } catch (Exception e) {
-            throw new FailedToCreateBucketException("Failed to create bucket: " + bucketName + ", error: " + e.getMessage());
+            throw new FailedToCreateBucketException("Failed to create bucket: " + e.getMessage());
+        }
+    }
+
+    private boolean fileExists(String fileName) throws Exception {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            if (!e.errorResponse().code().equals("NoSuchKey")) {
+                throw e;
+            }
+            return false;
         }
     }
 }
