@@ -3,19 +3,27 @@ package eu.hyperspace.ftsapp.service.impl;
 import eu.hyperspace.ftsapp.dto.FileBase64DTO;
 import eu.hyperspace.ftsapp.dto.FileNameDTO;
 import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.exception.*;
+import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
+import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.exception.FileAlreadyExistsException;
+import eu.hyperspace.ftsapp.exception.FileNotFoundException;
 import eu.hyperspace.ftsapp.service.FileTransferService;
-import io.minio.*;
-import io.minio.errors.*;
+import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
+import io.minio.errors.ErrorResponseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Service

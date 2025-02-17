@@ -1,8 +1,12 @@
 package eu.hyperspace.ftsapp.controller;
 
-import eu.hyperspace.ftsapp.exception.*;
+import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
+import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.exception.FileNotFoundException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;

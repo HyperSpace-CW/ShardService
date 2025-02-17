@@ -3,9 +3,18 @@ package eu.hyperspace.ftsapp.service;
 import eu.hyperspace.ftsapp.dto.FileBase64DTO;
 import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
 import eu.hyperspace.ftsapp.dto.FileNameDTO;
-import eu.hyperspace.ftsapp.exception.*;
+import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
 import eu.hyperspace.ftsapp.service.impl.FileTransferServiceImpl;
-import io.minio.*;
+import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.ErrorResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +24,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FileTransferServiceImplTest {
