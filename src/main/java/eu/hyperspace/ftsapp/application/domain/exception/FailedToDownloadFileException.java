@@ -1,4 +1,4 @@
-package eu.hyperspace.ftsapp.exception;
+package eu.hyperspace.ftsapp.application.domain.exception;
 
 public class FailedToDownloadFileException extends RuntimeException {
     public FailedToDownloadFileException() {

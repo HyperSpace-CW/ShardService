@@ -1,10 +1,10 @@
-package eu.hyperspace.ftsapp.controller.impl;
+package eu.hyperspace.ftsapp.adapter.in.rest.controller;
 
-import eu.hyperspace.ftsapp.controller.FileTransferController;
-import eu.hyperspace.ftsapp.dto.FileBase64DTO;
-import eu.hyperspace.ftsapp.dto.FileNameDTO;
-import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.service.FileTransferService;
+import eu.hyperspace.ftsapp.adapter.in.rest.openapi.FileTransferControllerApi;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
+import eu.hyperspace.ftsapp.application.port.in.FileTransferService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,32 +19,32 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("api/v1/shards/files")
 @RequiredArgsConstructor
-public class FileTransferControllerImpl implements FileTransferController {
+public class FileTransferController implements FileTransferControllerApi {
 
     private final FileTransferService fileTransferService;
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/file")
+    @PostMapping()
     public FileFullDataDTO upload(@RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
         return fileTransferService.uploadFile(fileFullDataDTO);
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/file")
+    @PutMapping()
     public FileFullDataDTO update(@RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
         return fileTransferService.updateFile(fileFullDataDTO);
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/file/{fileName}")
+    @GetMapping("/{fileName}")
     public FileBase64DTO downloadFile(@PathVariable @Valid String fileName) {
         return fileTransferService.downloadFile(fileName);
     }
 
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping("/file/{fileName}")
+    @DeleteMapping("/{fileName}")
     public FileNameDTO deleteFile(@PathVariable String fileName) {
         return fileTransferService.deleteFile(fileName);
     }

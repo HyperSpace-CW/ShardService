@@ -1,16 +1,16 @@
-package eu.hyperspace.ftsapp.service.impl;
+package eu.hyperspace.ftsapp.application.service;
 
-import eu.hyperspace.ftsapp.dto.FileBase64DTO;
-import eu.hyperspace.ftsapp.dto.FileNameDTO;
-import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
-import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
-import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.exception.FileAlreadyExistsException;
-import eu.hyperspace.ftsapp.exception.FileNotFoundException;
-import eu.hyperspace.ftsapp.service.FileTransferService;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToCreateBucketException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FileAlreadyExistsException;
+import eu.hyperspace.ftsapp.application.domain.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.application.port.in.FileTransferService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
@@ -22,6 +22,7 @@ import io.minio.errors.ErrorResponseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;

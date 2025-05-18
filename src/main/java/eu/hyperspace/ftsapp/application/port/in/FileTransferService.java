@@ -1,8 +1,8 @@
-package eu.hyperspace.ftsapp.service;
+package eu.hyperspace.ftsapp.application.port.in;
 
-import eu.hyperspace.ftsapp.dto.FileBase64DTO;
-import eu.hyperspace.ftsapp.dto.FileNameDTO;
-import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
 
 public interface FileTransferService {
 

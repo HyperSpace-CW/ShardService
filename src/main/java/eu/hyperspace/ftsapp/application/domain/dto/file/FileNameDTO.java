@@ -1,4 +1,4 @@
-package eu.hyperspace.ftsapp.dto;
+package eu.hyperspace.ftsapp.application.domain.dto.file;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

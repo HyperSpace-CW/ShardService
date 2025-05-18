@@ -1,14 +1,14 @@
-package eu.hyperspace.ftsapp.controller;
+package eu.hyperspace.ftsapp.adapter.in.rest.openapi;
 
-import eu.hyperspace.ftsapp.dto.FileBase64DTO;
-import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.dto.FileNameDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
-public interface FileTransferController {
+public interface FileTransferControllerApi {
     @Operation(
             summary = "Загрузка файла в Minio",
             responses = {

@@ -1,11 +1,11 @@
-package eu.hyperspace.ftsapp.controller;
+package eu.hyperspace.ftsapp.adapter.in.rest.handler;
 
-import eu.hyperspace.ftsapp.exception.FailedToCreateBucketException;
-import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
-import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToCreateBucketException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FileNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class FileExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
