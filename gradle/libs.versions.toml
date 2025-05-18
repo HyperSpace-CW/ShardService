@@ -1,0 +1,14 @@
+[versions]
+minio = "8.5.16" #upd from 8.5.9 Need to test.
+springdoc = "2.5.0"
+mapstruct = "1.6.3"
+jjwt = "0.12.3"
+
+[libraries]
+minio = { module = "io.minio:minio", version.ref = "minio" }
+springdoc-openapi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
