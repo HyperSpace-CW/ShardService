@@ -1,13 +1,13 @@
 package eu.hyperspace.ftsapp.service;
 
-import eu.hyperspace.ftsapp.dto.FileBase64DTO;
-import eu.hyperspace.ftsapp.dto.FileFullDataDTO;
-import eu.hyperspace.ftsapp.dto.FileNameDTO;
-import eu.hyperspace.ftsapp.exception.FailedToDeleteFileException;
-import eu.hyperspace.ftsapp.exception.FailedToDownloadFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUpdateFileException;
-import eu.hyperspace.ftsapp.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.service.impl.FileTransferServiceImpl;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
+import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.application.service.FileTransferServiceImpl;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
