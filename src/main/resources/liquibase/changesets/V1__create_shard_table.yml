@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_shard_table
+      author: Nikitin Arseniy
+      changes:
+        - createTable:
+            tableName: shard
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: owner_id
+                  type: bigint
+              - column:
+                  name: file_count
+                  type: bigint
+                  defaultValue: 0
+              - column:
+                  name: total_size
+                  type: bigint
+                  defaultValue: 0
