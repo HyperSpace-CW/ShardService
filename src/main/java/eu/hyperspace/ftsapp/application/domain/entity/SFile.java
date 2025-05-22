@@ -23,15 +23,15 @@ public class SFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
-    public String name;
+    private String name;
 
-    public String path;
+    private String path;
 
-    public String mimeType;
+    private String mimeType;
 
-    public long size;
+    private long size;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shard_id")

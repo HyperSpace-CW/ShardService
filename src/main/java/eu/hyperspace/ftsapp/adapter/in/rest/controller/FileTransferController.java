@@ -27,13 +27,15 @@ public class FileTransferController implements FileTransferControllerApi {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping()
-    public FileFullDataDTO upload(@RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
+    public FileFullDataDTO upload(
+            @RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
         return fileTransferService.uploadFile(fileFullDataDTO);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @PutMapping()
-    public FileFullDataDTO update(@RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
+    public FileFullDataDTO update(
+            @RequestBody @Valid FileFullDataDTO fileFullDataDTO) {
         return fileTransferService.updateFile(fileFullDataDTO);
     }
 

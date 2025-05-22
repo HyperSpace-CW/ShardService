@@ -44,8 +44,10 @@ public class FileTransferServiceImpl implements FileTransferService {
             byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
 
-            if (fileExists(fileFullDataDTO.getFileName()))
-                throw new FileAlreadyExistsException("file " + fileFullDataDTO.getFileName() + " already exists");
+            if (fileExists(fileFullDataDTO.getFileName())) {
+                throw new FileAlreadyExistsException(
+                        "file " + fileFullDataDTO.getFileName() + " already exists");
+            }
 
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -63,8 +65,10 @@ public class FileTransferServiceImpl implements FileTransferService {
     @Override
     public FileFullDataDTO updateFile(FileFullDataDTO fileFullDataDTO) {
         try {
-            if (!fileExists(fileFullDataDTO.getFileName()))
-                throw new FileNotFoundException("File " + fileFullDataDTO.getFileName() + " does not exist");
+            if (!fileExists(fileFullDataDTO.getFileName())) {
+                throw new FileNotFoundException(
+                        "File " + fileFullDataDTO.getFileName() + " does not exist");
+            }
 
             byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
             ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
@@ -106,8 +110,9 @@ public class FileTransferServiceImpl implements FileTransferService {
     @Override
     public FileNameDTO deleteFile(String fileName) {
         try {
-            if (!fileExists(fileName))
+            if (!fileExists(fileName)) {
                 throw new FileNotFoundException("file " + fileName + " does not exist");
+            }
 
             minioClient.removeObject(
                     RemoveObjectArgs.builder()

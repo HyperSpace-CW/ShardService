@@ -15,14 +15,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthFilter jwtFilter;
-
     private static final String[] PUBLIC_URLS = {
             "/token/generate",
             "/v3/api-docs/**",          // Для Swagger
             "/swagger-ui/**",           // Для Swagger
             "/swagger-resources/**"     // Для Swagger
     };
+    private final JwtAuthFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

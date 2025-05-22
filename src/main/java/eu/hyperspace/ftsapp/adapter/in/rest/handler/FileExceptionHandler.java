@@ -20,7 +20,8 @@ public class FileExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public Map<String, String> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
@@ -40,31 +41,36 @@ public class FileExceptionHandler {
 
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(FailedToCreateBucketException.class)
-    public String handleFailedToCreateBucketException(FailedToCreateBucketException ex) {
+    public String handleFailedToCreateBucketException(
+            FailedToCreateBucketException ex) {
         return ex.getMessage();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToDownloadFileException.class)
-    public String handleFailedToDownloadFileException(FailedToDownloadFileException ex) {
+    public String handleFailedToDownloadFileException(
+            FailedToDownloadFileException ex) {
         return ex.getMessage();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToUpdateFileException.class)
-    public String handleFailedToUpdateFileException(FailedToUpdateFileException ex) {
+    public String handleFailedToUpdateFileException(
+            FailedToUpdateFileException ex) {
         return ex.getMessage();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToDeleteFileException.class)
-    public String handleFailedToDeleteFileException(FailedToDeleteFileException ex) {
+    public String handleFailedToDeleteFileException(
+            FailedToDeleteFileException ex) {
         return ex.getMessage();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(FailedToUploadFileException.class)
-    public String handleFailedToUploadFileException(FailedToUploadFileException ex) {
+    public String handleFailedToUploadFileException(
+            FailedToUploadFileException ex) {
         return ex.getMessage();
     }
 }

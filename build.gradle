@@ -1,57 +1,68 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.1'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'eu.hyperspace'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
-	dependencies {
-		implementation 'org.springframework.boot:spring-boot-starter-web'
-		implementation 'org.springframework.boot:spring-boot-starter-validation'
-		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-		implementation 'org.liquibase:liquibase-core'
-		implementation 'org.springframework.boot:spring-boot-starter-security'
-		testImplementation 'org.springframework.security:spring-security-test'
-		compileOnly 'org.projectlombok:lombok'
-		annotationProcessor 'org.projectlombok:lombok'
-		testImplementation 'org.springframework.boot:spring-boot-starter-test'
-		runtimeOnly 'org.postgresql:postgresql'
-		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.liquibase:liquibase-core'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    testImplementation 'org.springframework.security:spring-security-test'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    runtimeOnly 'org.postgresql:postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-		// Minio
-		implementation libs.minio
+    // Minio
+    implementation libs.minio
 
-		// OpenApi
-		implementation libs.springdoc.openapi
+    // OpenApi
+    implementation libs.springdoc.openapi
 
-		// MapStruct
-		implementation libs.mapstruct
-		annotationProcessor libs.mapstruct.processor
+    // MapStruct
+    implementation libs.mapstruct
+    annotationProcessor libs.mapstruct.processor
 
-		// JWT
-		implementation libs.jjwt.api
-		runtimeOnly libs.jjwt.impl
-		runtimeOnly libs.jjwt.jackson
-	}
+    // JWT
+    implementation libs.jjwt.api
+    runtimeOnly libs.jjwt.impl
+    runtimeOnly libs.jjwt.jackson
+}
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
+
+tasks.jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+

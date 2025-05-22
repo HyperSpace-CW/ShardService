@@ -8,14 +8,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityUtils {
     public SecurityUserDetails getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("User not authenticated");
         }
 
         if (!(authentication.getPrincipal() instanceof SecurityUserDetails)) {
-            throw new IllegalStateException("Principal is not CustomUserDetails");
+            throw new IllegalStateException(
+                    "Principal is not CustomUserDetails");
         }
 
         return (SecurityUserDetails) authentication.getPrincipal();

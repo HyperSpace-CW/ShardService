@@ -1,8 +1,8 @@
 package eu.hyperspace.ftsapp.application.domain.entity;
 
+import eu.hyperspace.ftsapp.application.domain.entity.ids.ShardUserId;
 import eu.hyperspace.ftsapp.application.domain.enums.AccessLevel;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,13 +13,11 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -47,15 +45,15 @@ public class ShardUser {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Embeddable
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ShardUserId implements Serializable {
-        @Column(name = "shard_id")
-        private Long shardId;
+    public static ShardUser createOwner(Shard shard, Long userId) {
+        return ShardUser.builder()
+                .shard(shard)
+                .id(ShardUserId.of(shard.getId(), userId))
+                .accessLevel(AccessLevel.OWNER)
+                .build();
+    }
 
-        @Column(name = "user_id")
-        private Long userId;
+    public Long getUserId() {
+        return id.getUserId();
     }
 }

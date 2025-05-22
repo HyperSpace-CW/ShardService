@@ -1,4 +1,4 @@
-package eu.hyperspace.ftsapp.service;
+package eu.hyperspace.ftsapp.application.service;
 
 import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
 import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
@@ -7,7 +7,6 @@ import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileExcep
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.application.service.FileTransferServiceImpl;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
@@ -24,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
@@ -41,19 +41,14 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FileTransferServiceImplTest {
+    private final String bucketName = "test-bucket";
+    private final String fileName = "file";
+    private final String base64File = "aGVsbG8gd29ybGQ";
+    private final String errorResponseCode = "NoSuchKey";
     @Mock
     private MinioClient minioClient;
-
     @InjectMocks
     private FileTransferServiceImpl fileTransferService;
-
-    private final String bucketName = "test-bucket";
-
-    private final String fileName = "file";
-
-    private final String base64File = "aGVsbG8gd29ybGQ";
-
-    private final String errorResponseCode = "NoSuchKey";
 
     @BeforeEach
     public void setUp() {
