@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_shard_user_table
+      author: Nikitin Arseniy
+      changes:
+        - createTable:
+            tableName: shard_user
+            columns:
+              - column:
+                  name: shard_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_shard_user_shard
+                    references: shard(id)
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: access_level
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        - addPrimaryKey:
+            tableName: shard_user
+            columnNames: shard_id, user_id
+            constraintName: pk_shard_user

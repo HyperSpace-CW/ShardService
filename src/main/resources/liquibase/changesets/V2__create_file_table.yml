@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_file_table
+      author: Nikitin Arseniy
+      changes:
+        - createTable:
+            tableName: file
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: path
+                  type: text
+              - column:
+                  name: mime_type
+                  type: varchar(255)
+              - column:
+                  name: size
+                  type: bigint
+              - column:
+                  name: shard_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_file_shard
+                    references: shard(id)
