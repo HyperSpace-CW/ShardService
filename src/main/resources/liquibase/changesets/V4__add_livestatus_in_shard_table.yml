@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_shard_user_table
+      author: Nikitin Arseniy
+      changes:
+        - addColumn:
+            tableName: shard
+            columns:
+              - column:
+                  name: state
+                  type: varchar(50)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false

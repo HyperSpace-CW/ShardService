@@ -14,33 +14,18 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
-  minio-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: minio-service
-    ports:
-      - "${SERVICE_PORT}:8080"
-    environment:
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
-    depends_on:
-      - minio
-
   postgres:
     image: postgres:17.2-alpine
     container_name: postgres
     restart: always
     ports:
-      - "5432:5432"
+      - "${FTS_APP_DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: shard_db
+      POSTGRES_USER: ${FTS_APP_DB_USER}
+      POSTGRES_PASSWORD: ${FTS_APP_DB_PASSWORD}
+      POSTGRES_DB: ${FTS_APP_DB_NAME}
     healthcheck:
       test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
       interval: 10s
@@ -48,7 +33,45 @@ services:
       start_period: 10s
       retries: 5
 
+  shard_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shard_service
+    ports:
+      - "${SERVICE_PORT}:${SERVICE_PORT}"  # Маппинг на тот же порт, что указан в переменной
+    environment:
+      # Server
+      SERVICE_PORT: ${SERVICE_PORT}
+
+      # Database
+      FTS_APP_DB_IP: postgres  # Используем имя сервиса вместо localhost
+      FTS_APP_DB_PORT: ${FTS_APP_DB_PORT}
+      FTS_APP_DB_NAME: ${FTS_APP_DB_NAME}
+      FTS_APP_DB_USER: ${FTS_APP_DB_USER}
+      FTS_APP_DB_PASSWORD: ${FTS_APP_DB_PASSWORD}
+
+      # MinIO
+      MINIO_ENDPOINT: http://minio:9000  # Используем имя сервиса
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME}
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Spring specific
+      SPRING_CONFIG_IMPORT: "optional:file:.env[.properties]"
+      SPRING_LIQUIBASE_ENABLED: "true"
+    depends_on:
+      - minio
+      - postgres
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${SERVICE_PORT}/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   minio_data:
   postgres_data:
-

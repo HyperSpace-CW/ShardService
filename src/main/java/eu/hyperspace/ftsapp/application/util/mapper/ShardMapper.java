@@ -2,6 +2,7 @@ package eu.hyperspace.ftsapp.application.util.mapper;
 
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardCreationDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardDto;
+import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardShortDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardUpdateDto;
 import eu.hyperspace.ftsapp.application.domain.entity.Shard;
 import org.mapstruct.BeanMapping;
@@ -15,6 +16,8 @@ import org.mapstruct.ReportingPolicy;
 public interface ShardMapper {
 
     ShardDto toDto(Shard shard);
+
+    ShardShortDto toShortDto(Shard shard);
 
     @Mapping(target = "name", source = "shardName")
     Shard createShardFromDto(ShardCreationDto shardCreationDto);
