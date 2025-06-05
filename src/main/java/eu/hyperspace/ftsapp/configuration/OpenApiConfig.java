@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.info.Info;
 
 @OpenAPIDefinition(
         info = @Info(
-                title = "Fts App",
-                description = "API микросервиса, взаимодействующего с Minio",
+                title = "Shard app",
+                description = "API для взаимодействия с шардами и файлами",
                 version = "1.0.0"
         )
 )

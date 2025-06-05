@@ -5,3 +5,5 @@ databaseChangeLog:
       file: liquibase/changesets/V2__create_file_table.yml
   - include:
       file: liquibase/changesets/V3__create_shard_user_table.yml
+  - include:
+      file: liquibase/changesets/V4__add_livestatus_in_shard_table.yml

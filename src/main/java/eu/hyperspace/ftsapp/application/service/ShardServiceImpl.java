@@ -2,18 +2,25 @@ package eu.hyperspace.ftsapp.application.service;
 
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardCreationDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardDto;
+import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardShortDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardUpdateDto;
 import eu.hyperspace.ftsapp.application.domain.entity.Shard;
 import eu.hyperspace.ftsapp.application.domain.entity.ShardUser;
 import eu.hyperspace.ftsapp.application.domain.enums.AccessLevel;
+import eu.hyperspace.ftsapp.application.domain.enums.ShardState;
+import eu.hyperspace.ftsapp.application.domain.enums.params.ShardCategory;
 import eu.hyperspace.ftsapp.application.domain.exception.AccessDeniedException;
-import eu.hyperspace.ftsapp.application.domain.exception.EntityNotFoundException;
+import eu.hyperspace.ftsapp.application.domain.exception.ParamNotValidException;
+import eu.hyperspace.ftsapp.application.domain.exception.ShardNotFoundException;
 import eu.hyperspace.ftsapp.application.port.in.ShardService;
 import eu.hyperspace.ftsapp.application.port.out.ShardRepository;
 import eu.hyperspace.ftsapp.application.port.out.ShardUserRepository;
 import eu.hyperspace.ftsapp.application.util.SecurityUtils;
 import eu.hyperspace.ftsapp.application.util.mapper.ShardMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,16 +39,36 @@ public class ShardServiceImpl implements ShardService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ShardDto> getUserShards() {
-        return shardRepository
-                .findAllByUserId(getCurrentUserId())
-                .stream()
-                .map(shardMapper::toDto).toList();
+    public List<ShardDto> getUserShards(int page, int size, String category) {
+        Pageable pageable = PageRequest.of(page, size);
+        ShardCategory categoryEnum;
+
+        try {
+            categoryEnum = ShardCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ParamNotValidException("Category not valid");
+        }
+
+        return getShardPageByCategory(pageable, categoryEnum);
+
     }
+
+    public List<ShardDto> getShardPageByCategory(Pageable pageable, ShardCategory category) {
+        Long userId = securityUtils.getCurrentUserId();
+
+        Page<ShardDto> s = switch (category) {
+            case ShardCategory.OWNED -> shardRepository.findPageByOwnerId(userId, pageable).map(shardMapper::toDto);
+            case ShardCategory.ALL -> shardUserRepository.findAllUserShards(userId, pageable).map(shardMapper::toDto);
+            case ShardCategory.TRASH ->
+                    shardRepository.findByOwnerIdAndState(userId, ShardState.DELETED, pageable).map(shardMapper::toDto);
+        };
+        return s.get().toList();
+    }
+
 
     @Transactional
     @Override
-    public void createShard(ShardCreationDto creationDto) {
+    public ShardShortDto createShard(ShardCreationDto creationDto) {
         Shard newShard = shardMapper.createShardFromDto(creationDto);
         newShard.setOwnerId(getCurrentUserId());
         Shard savedShard = shardRepository.save(newShard);
@@ -49,24 +76,63 @@ public class ShardServiceImpl implements ShardService {
         shardUserRepository.save(
                 ShardUser.createOwner(savedShard, getCurrentUserId()));
 
+        return shardMapper.toShortDto(savedShard);
     }
 
     @Transactional(readOnly = true)
     @Override
     public ShardDto getShardById(Long shardId) {
-        checkAccess(shardId, getCurrentUserId(), AccessLevel.READ, AccessLevel.WRITE, AccessLevel.OWNER);
 
         return shardRepository.findById(shardId)
-                .map(shardMapper::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("Shard", "ID"));
+                .map(shard -> {
+                    checkAccess(shardId, getCurrentUserId(), AccessLevel.READ, AccessLevel.WRITE, AccessLevel.OWNER);
+                    return shardMapper.toDto(shard);
+                })
+                .orElseThrow(() -> new ShardNotFoundException("Shard", "ID"));
     }
 
+    /**
+     * Удаляет связь пользователя с шардом в зависимости от его роли.
+     *
+     * <p>Для приглашённых пользователей просто удаляет связь с шардом.
+     * Для владельца шарда сначала перемещает шард в корзину.
+     * При повторном вызове метода помечает шард как удалённый и закрывает доступ всем пользователям.
+     *
+     * <p><b>Важно:</b> метод не выполняет физического удаления шарда из базы данных,
+     * а только изменяет его статус.
+     *
+     * @see #deleteByState(Long)
+     */
     @Transactional
     @Override
     public void deleteShard(Long shardId) {
-        checkAccess(shardId, getCurrentUserId(), AccessLevel.OWNER);
+        switch (getShardAccessLevel(shardId)) {
+            case READ, WRITE -> {
+                shardUserRepository.deleteById(shardId, getCurrentUserId());
+            }
+            case OWNER -> {
+                deleteByState(shardId);
+            }
+        }
+    }
 
-        shardRepository.deleteById(shardId);
+    private void deleteByState(Long shardId) {
+        Shard shard = shardRepository.findById(shardId)
+                .orElseThrow(() -> new ShardNotFoundException("Shard", "ID"));
+
+        switch (shard.getState()) {
+            case ACTIVE -> {
+                shard.setState(ShardState.IN_BIN);
+                shardRepository.save(shard);
+            }
+            case IN_BIN -> {
+                shard.setState(ShardState.DELETED);
+                shardRepository.save(shard);
+                shardUserRepository.deleteById(shardId, getCurrentUserId());
+                //TODO здесь нужно будет удалить из MINIO связанные файлы
+            }
+            case DELETED -> throw new ShardNotFoundException("Shard", "ID");
+        }
     }
 
 
@@ -76,12 +142,13 @@ public class ShardServiceImpl implements ShardService {
         checkAccess(shardId, getCurrentUserId(), AccessLevel.WRITE, AccessLevel.OWNER);
 
         Shard shard = shardRepository.findById(shardId)
-                .orElseThrow(() -> new EntityNotFoundException("Shard", "ID"));
+                .orElseThrow(() -> new ShardNotFoundException("Shard", "ID"));
 
         shardMapper.updateShardFromDto(updateDto, shard);
 
         shardRepository.save(shard);
     }
+
 
     private void checkAccess(Long shardId, Long userId,
                              AccessLevel... requiredLevels) {
@@ -98,5 +165,11 @@ public class ShardServiceImpl implements ShardService {
     private Long getCurrentUserId() {
         return securityUtils.getCurrentUserId();
     }
+
+    private AccessLevel getShardAccessLevel(Long shardId) {
+        return shardUserRepository.findById(shardId, getCurrentUserId())
+                .orElseThrow(AccessDeniedException::new);
+    }
+
 
 }

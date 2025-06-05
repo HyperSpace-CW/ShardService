@@ -2,18 +2,20 @@ package eu.hyperspace.ftsapp.application.port.in;
 
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardCreationDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardDto;
+import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardShortDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardUpdateDto;
 
 import java.util.List;
 
 public interface ShardService {
-    List<ShardDto> getUserShards();
+    List<ShardDto> getUserShards(int page, int size, String category);
 
-    void createShard(ShardCreationDto creationDto);
+    ShardShortDto createShard(ShardCreationDto creationDto);
 
     ShardDto getShardById(Long shardId);
 
     void deleteShard(Long shardId);
 
     void updateShardInfo(Long shardId, ShardUpdateDto creationDto);
+
 }
