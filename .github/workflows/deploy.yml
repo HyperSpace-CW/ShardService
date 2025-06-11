@@ -1,7 +1,10 @@
 name: Deploy Shard Service
 
 on:
+  pull_request:
+    branches: [master]
   push:
+    branches: [dev, master]
 
 jobs:
   push_image:
