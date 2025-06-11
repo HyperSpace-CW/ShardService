@@ -24,7 +24,7 @@ WORKDIR /app
 COPY --from=builder /build/build/libs/FtsApp-0.0.1-SNAPSHOT.jar /app/app.jar
 
 # Открываем порт для приложения
-EXPOSE 8080
+EXPOSE 3015
 
 # Команда для запуска приложения
 ENTRYPOINT ["java", "-jar", "app.jar"]
