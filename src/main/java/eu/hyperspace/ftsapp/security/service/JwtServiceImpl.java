@@ -40,10 +40,10 @@ public class JwtServiceImpl implements JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        String userId = claims.get("ID", String.class);
+        Long userId = claims.get("id", Long.class);
         String email = claims.getSubject();
 
-        return new AuthenticatedUser(userId, email);
+        return new AuthenticatedUser(String.valueOf(userId), email);
     }
 
     @Override
@@ -53,10 +53,11 @@ public class JwtServiceImpl implements JwtService {
         );
 
         Claims claims = Jwts.claims()
-                .subject("test@mail.ru")
+                .add("id", 1)
                 .expiration(expirationTime)
-                .add("ID", "1")
                 .build();
+
+        log.info("Generated JWT token: {}", claims.toString());
 
         return Jwts.builder()
                 .claims(claims)
