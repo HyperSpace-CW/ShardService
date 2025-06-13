@@ -1,16 +1,13 @@
 package eu.hyperspace.ftsapp.application.port.in;
 
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
+import eu.hyperspace.ftsapp.application.domain.entity.SFile;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface FileTransferService {
 
-    FileFullDataDTO uploadFile(FileFullDataDTO fileFullDataDTO);
+    void uploadFile(MultipartFile file, String minioFileName);
 
-    FileFullDataDTO updateFile(FileFullDataDTO fileFullDataDTO);
+    MultipartFile downloadFile(SFile sFile);
 
-    FileBase64DTO downloadFile(String fileName);
-
-    FileNameDTO deleteFile(String fileName);
+    void deleteFile(String minioFileName);
 }

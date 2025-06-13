@@ -10,6 +10,10 @@ spring:
     url: "jdbc:postgresql://${FTS_APP_DB_IP}:${FTS_APP_DB_PORT}/${FTS_APP_DB_NAME}"
     username: ${FTS_APP_DB_USER}
     password: ${FTS_APP_DB_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: ${MAX_MULTIPARTFILE_SIZE:10GB}
+      max-request-size: ${MAX_MULTIPARTFILE_SIZE:10GB}
 
   autoconfigure:
     exclude: "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration"
@@ -31,4 +35,7 @@ minio:
 jwt:
   secret: ${JWT_SECRET}
 
+service-limits:
+  shard-capacity: ${SHARD_CAPACITY:5368709120}
+  single-upload-capacity: ${SINGLE_UPLOAD_CAPACITY:5368709120}
 

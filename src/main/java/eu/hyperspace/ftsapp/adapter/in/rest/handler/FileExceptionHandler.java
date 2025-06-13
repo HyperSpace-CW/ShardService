@@ -5,7 +5,9 @@ import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileExcep
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
+import eu.hyperspace.ftsapp.application.domain.exception.FileAlreadyExistsException;
 import eu.hyperspace.ftsapp.application.domain.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.application.domain.exception.FileSizeLimitExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -71,6 +73,20 @@ public class FileExceptionHandler {
     @ExceptionHandler(FailedToUploadFileException.class)
     public String handleFailedToUploadFileException(
             FailedToUploadFileException ex) {
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(FileSizeLimitExceededException.class)
+    public String handleFileSizeLimitExceededException(
+            FileSizeLimitExceededException ex) {
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(FileAlreadyExistsException.class)
+    public String handleFileAlreadyExistsException(
+            FileAlreadyExistsException ex) {
         return ex.getMessage();
     }
 }

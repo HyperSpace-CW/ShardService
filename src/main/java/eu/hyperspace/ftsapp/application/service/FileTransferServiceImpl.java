@@ -1,15 +1,12 @@
 package eu.hyperspace.ftsapp.application.service;
 
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileBase64DTO;
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileFullDataDTO;
-import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
+import eu.hyperspace.ftsapp.application.domain.entity.SFile;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToCreateBucketException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToDeleteFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
-import eu.hyperspace.ftsapp.application.domain.exception.FailedToUpdateFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToUploadFileException;
-import eu.hyperspace.ftsapp.application.domain.exception.FileAlreadyExistsException;
 import eu.hyperspace.ftsapp.application.domain.exception.FileNotFoundException;
+import eu.hyperspace.ftsapp.application.domain.model.InMemoryMultipartFile;
 import eu.hyperspace.ftsapp.application.port.in.FileTransferService;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
@@ -22,8 +19,8 @@ import io.minio.errors.ErrorResponseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
 
@@ -35,83 +32,54 @@ public class FileTransferServiceImpl implements FileTransferService {
 
     @Value("${minio.bucketName}")
     private String bucketName;
-
+    // до
     @Override
-    public FileFullDataDTO uploadFile(FileFullDataDTO fileFullDataDTO) {
+    public void uploadFile(MultipartFile file, String minioFileName) {
         try {
             createBucketIfNotExists();
 
-            byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
-
-            if (fileExists(fileFullDataDTO.getFileName())) {
-                throw new FileAlreadyExistsException(
-                        "file " + fileFullDataDTO.getFileName() + " already exists");
-            }
-
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(fileFullDataDTO.getFileName())
-                            .stream(inputStream, fileBytes.length, -1)
+                            .object(minioFileName)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
                             .build()
             );
-            return fileFullDataDTO;
         } catch (Exception e) {
-            throw new FailedToUploadFileException("Failed to upload file: " + e.getMessage());
+            throw new FailedToUploadFileException(
+                    "Failed to upload file " + minioFileName + " in minio: " + e.getMessage()
+            );
         }
     }
 
     @Override
-    public FileFullDataDTO updateFile(FileFullDataDTO fileFullDataDTO) {
+    public MultipartFile downloadFile(SFile sFile) {
         try {
-            if (!fileExists(fileFullDataDTO.getFileName())) {
-                throw new FileNotFoundException(
-                        "File " + fileFullDataDTO.getFileName() + " does not exist");
-            }
-
-            byte[] fileBytes = Base64.getDecoder().decode(fileFullDataDTO.getBase64File());
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes);
-
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(fileFullDataDTO.getFileName())
-                            .stream(inputStream, fileBytes.length, -1)
-                            .build()
-            );
-            return fileFullDataDTO;
-        } catch (Exception e) {
-            throw new FailedToUpdateFileException("Failed to update file: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public FileBase64DTO downloadFile(String fileName) {
-        try {
-            if (!fileExists(fileName)) {
-                throw new FileNotFoundException("file " + fileName + " not found");
-            }
-
-            try (InputStream inputStream = minioClient.getObject(
+            InputStream inputStream = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(fileName)
-                            .build()
-            )) {
-                byte[] fileBytes = inputStream.readAllBytes();
-                return new FileBase64DTO(Base64.getEncoder().encodeToString(fileBytes));
-            }
+                            .object(sFile.getMinioName())
+                            .build());
+
+            byte[] fileBytes = inputStream.readAllBytes();
+
+            return new InMemoryMultipartFile(
+                    sFile.getName(),
+                    sFile.getName(),
+                    sFile.getMimeType(),
+                    fileBytes
+            );
         } catch (Exception e) {
             throw new FailedToDownloadFileException("Failed to download file: " + e.getMessage());
         }
     }
 
     @Override
-    public FileNameDTO deleteFile(String fileName) {
+    public void deleteFile(String fileName) {
         try {
             if (!fileExists(fileName)) {
-                throw new FileNotFoundException("file " + fileName + " does not exist");
+                throw new FileNotFoundException("File " + fileName + " does not exist");
             }
 
             minioClient.removeObject(
@@ -120,7 +88,6 @@ public class FileTransferServiceImpl implements FileTransferService {
                             .object(fileName)
                             .build()
             );
-            return new FileNameDTO(fileName);
         } catch (Exception e) {
             throw new FailedToDeleteFileException("Failed to delete file: " + e.getMessage());
         }

@@ -4,6 +4,7 @@ import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardCreationDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardShortDto;
 import eu.hyperspace.ftsapp.application.domain.dto.shard.ShardUpdateDto;
+import eu.hyperspace.ftsapp.application.domain.entity.Shard;
 
 import java.util.List;
 
@@ -17,5 +18,11 @@ public interface ShardService {
     void deleteShard(Long shardId);
 
     void updateShardInfo(Long shardId, ShardUpdateDto creationDto);
+
+    Shard getShardEntityById(Long shardId);
+
+    void updateShardSize(Long shardId, Long bytesCount);
+
+    boolean shardExistsById(Long shardId);
 
 }

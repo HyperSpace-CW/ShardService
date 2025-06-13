@@ -171,5 +171,23 @@ public class ShardServiceImpl implements ShardService {
                 .orElseThrow(AccessDeniedException::new);
     }
 
+    @Override
+    public Shard getShardEntityById(Long shardId) {
+        return shardRepository
+                .findById(shardId)
+                .orElseThrow(() -> new ShardNotFoundException("Shard", "ID"));
+    }
+
+    @Override
+    public void updateShardSize(Long shardId, Long bytesCount) {
+        Shard shard = getShardEntityById(shardId);
+        shard.setTotalSize(shard.getTotalSize() + bytesCount);
+        shardRepository.save(shard);
+    }
+
+    @Override
+    public boolean shardExistsById(Long shardId) {
+        return shardRepository.existsById(shardId);
+    }
 
 }
