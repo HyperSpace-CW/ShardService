@@ -41,8 +41,9 @@ public interface ShardUserRepository
     @Query("DELETE FROM ShardUser su " +
             "WHERE su.id.shardId = :shardId " +
             "AND su.id.userId = :userId")
-    void deleteById(Long shardId, Long currentUserId);
-
+    void deleteById(
+            @Param("shardId") Long shardId,
+            @Param("userId") Long userId);
 
     @Query("SELECT su.shard FROM ShardUser su WHERE su.id.userId = :userId ORDER BY su.shard.updatedAt DESC")
     Page<Shard> findAllUserShards(@Param("userId") Long userId, Pageable pageable);

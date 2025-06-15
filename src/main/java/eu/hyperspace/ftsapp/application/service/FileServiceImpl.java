@@ -17,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -34,6 +38,7 @@ public class FileServiceImpl implements FileService {
 
     private final FileRepository fileRepository;
 
+    @Lazy
     private final ShardService shardService;
 
     private final FileTransferService fileTransferService;
@@ -63,39 +68,55 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public List<FileInfoDTO> uploadFiles(List<MultipartFile> files, Long shardId) {
-        if (!shardService.shardExistsById(shardId)) {
-            throw new EntityNotFoundException("Shard with id " + shardId + " not found.");
-        }
-
-        validateFileNamesUniqueness(files, shardId);
-
-        validateFilesSize(files, shardId);
-
         Shard shard = shardService.getShardEntityById(shardId);
 
-        return files.stream()
+        validateFileNames(files, shardId);
+
+        validateFilesSize(files, shard);
+
+        List<SFile> sFiles = files.stream()
                 .map(file -> {
                     SFile sFile = fileMapper.toEntity(file);
                     sFile.setShard(shard);
                     fileTransferService.uploadFile(file, sFile.getMinioName());
-                    return fileMapper.toDto(fileRepository.save(sFile));
+                    return sFile;
                 })
+                .toList();
+        List<SFile> savedFiles = fileRepository.saveAll(sFiles);
+
+        long totalFilesSize = files.stream().mapToLong(MultipartFile::getSize).sum();
+        shardService.updateShardSize(shardId, totalFilesSize);
+
+        return savedFiles.stream()
+                .map(fileMapper::toDto)
                 .toList();
     }
 
-    private void validateFileNamesUniqueness(List<MultipartFile> files, Long shardId) {
-        List<String> duplicateNames = files.stream()
+    private void validateFileNames(List<MultipartFile> files, Long shardId) {
+        Set<String> incomingNames = files.stream()
                 .map(MultipartFile::getOriginalFilename)
-                .filter(name -> fileRepository.existsByShardIdAndName(shardId, name))
-                .toList();
+                .collect(Collectors.toSet());
+        if (incomingNames.size() < files.size()) {
+            throw new IllegalArgumentException("Duplicate names in upload batch");
+        }
 
+        List<String> longFileNames = incomingNames.stream()
+                .filter(name -> name.length() > 32)
+                .toList();
+        if(!longFileNames.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "These files has name exceeds maximum length of 32 characters: " + longFileNames
+            );
+        }
+
+        List<String> duplicateNames = fileRepository.findExistingNamesInShard(shardId, incomingNames);
         if (!duplicateNames.isEmpty()) {
             throw new FileAlreadyExistsException(
                     "Files with these names already exist in shard: " + duplicateNames);
         }
     }
 
-    private void validateFilesSize(List<MultipartFile> files, Long shardId) {
+    private void validateFilesSize(List<MultipartFile> files, Shard shard) {
         long filesSize = files.stream()
                 .mapToLong(MultipartFile::getSize)
                 .sum();
@@ -107,7 +128,6 @@ public class FileServiceImpl implements FileService {
             );
         }
 
-        Shard shard = shardService.getShardEntityById(shardId);
         long totalSize = filesSize + shard.getTotalSize();
 
         if (totalSize > shardCapacity) {
@@ -124,12 +144,20 @@ public class FileServiceImpl implements FileService {
         SFile file = fileRepository.findById(id).orElseThrow(
                 () -> new FileNotFoundException("File with id " + id + " not found")
         );
+
+        String oldFileName = file.getName();
+        int lastDotIndex = oldFileName.lastIndexOf('.');
+        String extension = (lastDotIndex != -1) ? oldFileName.substring(lastDotIndex) : "";
+        String newFileName = fileNameDTO.getFileName() + extension;
+
         List<SFile> shardFiles = fileRepository.findAllByShardId(file.getShard().getId());
         for (SFile shardFile : shardFiles) {
-            if (shardFile.getName().equals(fileNameDTO.getFileName()))
+            if (shardFile.getName().equals(newFileName)) {
                 throw new FileAlreadyExistsException("File with this name already exists in shard");
+            }
         }
-        file.setName(fileNameDTO.getFileName());
+
+        file.setName(newFileName);
         return fileMapper.toDto(fileRepository.save(file));
     }
 
@@ -183,5 +211,12 @@ public class FileServiceImpl implements FileService {
             deletedFiles.add(fileMapper.toDto(file));
         }
         return deletedFiles;
+    }
+
+    @Override
+    public void deleteFilesByShard(Shard shard) {
+        List<SFile> files = fileRepository.findAllByShardId(shard.getId());
+        files.forEach(file -> fileTransferService.deleteFile(file.getMinioName()));
+        fileRepository.deleteAll(files);
     }
 }
