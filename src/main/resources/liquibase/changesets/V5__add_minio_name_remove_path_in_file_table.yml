@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: modify_file_table
+      author: Kulbaka Nikita
+      changes:
+        - addColumn:
+            tableName: file
+            columns:
+              - column:
+                  name: minio_name
+                  type: varchar(255)
+
+        - dropColumn:
+            tableName: file
+            columnName: path

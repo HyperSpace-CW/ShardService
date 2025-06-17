@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "file")
 @AllArgsConstructor
@@ -27,7 +29,7 @@ public class SFile {
 
     private String name;
 
-    private String path;
+    private String minioName;
 
     private String mimeType;
 

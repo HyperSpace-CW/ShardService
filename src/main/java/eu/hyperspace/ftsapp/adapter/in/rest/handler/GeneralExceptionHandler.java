@@ -2,6 +2,7 @@ package eu.hyperspace.ftsapp.adapter.in.rest.handler;
 
 import eu.hyperspace.ftsapp.application.domain.dto.error.ErrorDto;
 import eu.hyperspace.ftsapp.application.domain.exception.ParamNotValidException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,6 +25,13 @@ public class GeneralExceptionHandler {
     public ErrorDto inputDataInvalidException(IllegalArgumentException ex) {
         log.error(ex.getMessage());
         return new ErrorDto(HttpStatus.BAD_REQUEST.value(), "Input data is invalid");
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String inputEntityNotFoundException(EntityNotFoundException ex) {
+        log.error(ex.getMessage());
+        return ex.getMessage();
     }
 
 }

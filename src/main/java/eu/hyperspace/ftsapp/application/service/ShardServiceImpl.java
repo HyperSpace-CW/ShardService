@@ -12,12 +12,16 @@ import eu.hyperspace.ftsapp.application.domain.enums.params.ShardCategory;
 import eu.hyperspace.ftsapp.application.domain.exception.AccessDeniedException;
 import eu.hyperspace.ftsapp.application.domain.exception.ParamNotValidException;
 import eu.hyperspace.ftsapp.application.domain.exception.ShardNotFoundException;
+import eu.hyperspace.ftsapp.application.port.in.FileService;
 import eu.hyperspace.ftsapp.application.port.in.ShardService;
 import eu.hyperspace.ftsapp.application.port.out.ShardRepository;
 import eu.hyperspace.ftsapp.application.port.out.ShardUserRepository;
 import eu.hyperspace.ftsapp.application.util.SecurityUtils;
 import eu.hyperspace.ftsapp.application.util.mapper.ShardMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +40,11 @@ public class ShardServiceImpl implements ShardService {
     private final ShardUserRepository shardUserRepository;
     private final ShardMapper shardMapper;
     private final SecurityUtils securityUtils;
+    private final ApplicationContext applicationContext;
+
+    private FileService getFileService() {
+        return applicationContext.getBean(FileService.class);
+    }
 
     @Transactional(readOnly = true)
     @Override
@@ -129,7 +138,7 @@ public class ShardServiceImpl implements ShardService {
                 shard.setState(ShardState.DELETED);
                 shardRepository.save(shard);
                 shardUserRepository.deleteById(shardId, getCurrentUserId());
-                //TODO здесь нужно будет удалить из MINIO связанные файлы
+                getFileService().deleteFilesByShard(shard);
             }
             case DELETED -> throw new ShardNotFoundException("Shard", "ID");
         }
@@ -171,5 +180,23 @@ public class ShardServiceImpl implements ShardService {
                 .orElseThrow(AccessDeniedException::new);
     }
 
+    @Override
+    public Shard getShardEntityById(Long shardId) {
+        return shardRepository
+                .findById(shardId)
+                .orElseThrow(() -> new EntityNotFoundException("Shard with id " + shardId + " not found."));
+    }
+
+    @Override
+    public void updateShardSize(Long shardId, Long bytesCount) {
+        Shard shard = getShardEntityById(shardId);
+        shard.setTotalSize(shard.getTotalSize() + bytesCount);
+        shardRepository.save(shard);
+    }
+
+    @Override
+    public boolean shardExistsById(Long shardId) {
+        return shardRepository.existsById(shardId);
+    }
 
 }
