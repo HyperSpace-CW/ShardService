@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_share_token_table
+      author: Kulbaka Nikita
+      changes:
+        - createTable:
+            tableName: share_token
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: shard_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_share_token_shard
+                    references: shard(id)
+              - column:
+                  name: token
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: access_level
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: bigint
+                  constraints:
+                    nullable: false

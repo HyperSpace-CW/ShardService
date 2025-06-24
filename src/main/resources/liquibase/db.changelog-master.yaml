@@ -9,3 +9,5 @@ databaseChangeLog:
       file: liquibase/changesets/V4__add_livestatus_in_shard_table.yml
   - include:
       file: liquibase/changesets/V5__add_minio_name_remove_path_in_file_table.yml
+  - include:
+      file: liquibase/changesets/V6__add_share_token_table.yml

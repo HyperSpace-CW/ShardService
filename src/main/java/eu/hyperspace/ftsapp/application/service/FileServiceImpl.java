@@ -4,10 +4,13 @@ import eu.hyperspace.ftsapp.application.domain.dto.file.FileInfoDTO;
 import eu.hyperspace.ftsapp.application.domain.dto.file.FileNameDTO;
 import eu.hyperspace.ftsapp.application.domain.entity.SFile;
 import eu.hyperspace.ftsapp.application.domain.entity.Shard;
+import eu.hyperspace.ftsapp.application.domain.enums.AccessLevel;
+import eu.hyperspace.ftsapp.application.domain.exception.AccessDeniedException;
 import eu.hyperspace.ftsapp.application.domain.exception.FailedToDownloadFileException;
 import eu.hyperspace.ftsapp.application.domain.exception.FileAlreadyExistsException;
 import eu.hyperspace.ftsapp.application.domain.exception.FileNotFoundException;
 import eu.hyperspace.ftsapp.application.domain.exception.FileSizeLimitExceededException;
+import eu.hyperspace.ftsapp.application.domain.exception.ParamNotValidException;
 import eu.hyperspace.ftsapp.application.port.in.FileService;
 import eu.hyperspace.ftsapp.application.port.in.FileTransferService;
 import eu.hyperspace.ftsapp.application.port.in.ShardService;
@@ -26,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -58,6 +60,11 @@ public class FileServiceImpl implements FileService {
         if (!shardService.shardExistsById(shardId)) {
             throw new EntityNotFoundException("Shard with id " + shardId + " not found.");
         }
+        Long currentUserId = shardService.getCurrentUserId();
+
+        if (!shardService.hasAccess(shardId, currentUserId, AccessLevel.OWNER, AccessLevel.WRITE, AccessLevel.READ)) {
+            throw new AccessDeniedException();
+        }
 
         return fileRepository
                 .findAllByShardId(shardId)
@@ -69,6 +76,11 @@ public class FileServiceImpl implements FileService {
     @Transactional
     public List<FileInfoDTO> uploadFiles(List<MultipartFile> files, Long shardId) {
         Shard shard = shardService.getShardEntityById(shardId);
+        Long currentUserId = shardService.getCurrentUserId();
+
+        if (!shardService.hasAccess(shardId, currentUserId, AccessLevel.OWNER, AccessLevel.WRITE)) {
+            throw new AccessDeniedException();
+        }
 
         validateFileNames(files, shardId);
 
@@ -86,6 +98,7 @@ public class FileServiceImpl implements FileService {
 
         long totalFilesSize = files.stream().mapToLong(MultipartFile::getSize).sum();
         shardService.updateShardSize(shardId, totalFilesSize);
+        shardService.updateShardFilesCount(shardId, (long) savedFiles.size());
 
         return savedFiles.stream()
                 .map(fileMapper::toDto)
@@ -97,14 +110,14 @@ public class FileServiceImpl implements FileService {
                 .map(MultipartFile::getOriginalFilename)
                 .collect(Collectors.toSet());
         if (incomingNames.size() < files.size()) {
-            throw new IllegalArgumentException("Duplicate names in upload batch");
+            throw new ParamNotValidException("Duplicate names in upload batch");
         }
 
         List<String> longFileNames = incomingNames.stream()
                 .filter(name -> name.length() > 32)
                 .toList();
-        if(!longFileNames.isEmpty()) {
-            throw new IllegalArgumentException(
+        if (!longFileNames.isEmpty()) {
+            throw new ParamNotValidException(
                     "These files has name exceeds maximum length of 32 characters: " + longFileNames
             );
         }
@@ -144,6 +157,12 @@ public class FileServiceImpl implements FileService {
         SFile file = fileRepository.findById(id).orElseThrow(
                 () -> new FileNotFoundException("File with id " + id + " not found")
         );
+        Long currentUserId = shardService.getCurrentUserId();
+        Long shardId = file.getShard().getId();
+
+        if (!shardService.hasAccess(shardId, currentUserId, AccessLevel.OWNER, AccessLevel.WRITE)) {
+            throw new AccessDeniedException();
+        }
 
         String oldFileName = file.getName();
         int lastDotIndex = oldFileName.lastIndexOf('.');
@@ -164,6 +183,8 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public ByteArrayResource downloadFiles(List<Long> fileIds) {
+        Long currentUserId = shardService.getCurrentUserId();
+
         findAbsentFiles(fileIds);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -171,6 +192,12 @@ public class FileServiceImpl implements FileService {
             for (Long id : fileIds) {
                 SFile file = fileRepository.findById(id)
                         .orElseThrow(() -> new FileNotFoundException("File with id " + id + " not found"));
+
+                Long shardId = file.getShard().getId();
+                if (!shardService.hasAccess(shardId, currentUserId, AccessLevel.OWNER, AccessLevel.WRITE, AccessLevel.READ)) {
+                    throw new AccessDeniedException();
+                }
+
                 MultipartFile multipartFile = fileTransferService.downloadFile(file);
 
                 ZipEntry entry = new ZipEntry(multipartFile.getOriginalFilename());
@@ -200,12 +227,22 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public List<FileInfoDTO> deleteFiles(List<Long> fileIds) {
+        Long currentUserId = shardService.getCurrentUserId();
         findAbsentFiles(fileIds);
         List<FileInfoDTO> deletedFiles = new ArrayList<>();
         for (Long id : fileIds) {
             SFile file = fileRepository.findById(id).orElseThrow(
                     () -> new FileNotFoundException("File with id " + id + " not found")
             );
+
+            Long shardId = file.getShard().getId();
+            if (!shardService.hasAccess(shardId, currentUserId, AccessLevel.OWNER, AccessLevel.WRITE)) {
+                throw new AccessDeniedException();
+            }
+
+            Shard shard = file.getShard();
+            shardService.updateShardSize(shard.getId(),  -file.getSize());
+            shardService.updateShardFilesCount(shard.getId(), -1L);
             fileTransferService.deleteFile(file.getMinioName());
             fileRepository.delete(file);
             deletedFiles.add(fileMapper.toDto(file));

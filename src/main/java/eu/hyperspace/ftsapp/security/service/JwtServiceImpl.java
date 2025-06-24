@@ -49,11 +49,11 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String generateJwtToken() {
         Date expirationTime = Date.from(
-                Instant.now().plusSeconds(15 * 60)
+                Instant.now().plusSeconds(1500 * 60)
         );
 
         Claims claims = Jwts.claims()
-                .add("id", 1)
+                .add("id", 2)
                 .expiration(expirationTime)
                 .build();
 

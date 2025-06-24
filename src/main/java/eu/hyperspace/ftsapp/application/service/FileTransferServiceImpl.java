@@ -32,7 +32,7 @@ public class FileTransferServiceImpl implements FileTransferService {
 
     @Value("${minio.bucketName}")
     private String bucketName;
-    // до
+
     @Override
     public void uploadFile(MultipartFile file, String minioFileName) {
         try {
