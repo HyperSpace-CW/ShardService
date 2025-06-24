@@ -21,7 +21,6 @@ import eu.hyperspace.ftsapp.application.util.mapper.ShardMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -171,12 +170,12 @@ public class ShardServiceImpl implements ShardService {
         }
     }
 
-    private Long getCurrentUserId() {
+    public Long getCurrentUserId() {
         return securityUtils.getCurrentUserId();
     }
 
     private AccessLevel getShardAccessLevel(Long shardId) {
-        return shardUserRepository.findById(shardId, getCurrentUserId())
+        return shardUserRepository.findById(getCurrentUserId(), shardId)
                 .orElseThrow(AccessDeniedException::new);
     }
 
@@ -195,8 +194,28 @@ public class ShardServiceImpl implements ShardService {
     }
 
     @Override
+    public void updateShardFilesCount(Long shardId, Long filesDiff) {
+        Shard shard = getShardEntityById(shardId);
+        shard.setFileCount(shard.getFileCount() + filesDiff);
+        shardRepository.save(shard);
+    }
+
+    @Override
     public boolean shardExistsById(Long shardId) {
         return shardRepository.existsById(shardId);
+    }
+
+    public boolean isOwner(Long shardId, Long userId) {
+        return shardUserRepository.existsByIdAndAccessLevelIn(shardId, userId, EnumSet.of(AccessLevel.OWNER));
+    }
+
+    public boolean hasAccess(Long shardId, Long userId, AccessLevel... requiredLevels) {
+        return shardUserRepository.existsByIdAndAccessLevelIn(shardId, userId, Set.of(requiredLevels));
+    }
+
+    @Transactional
+    public ShardUser addShardUser(ShardUser shardUser) {
+        return shardUserRepository.save(shardUser);
     }
 
 }
