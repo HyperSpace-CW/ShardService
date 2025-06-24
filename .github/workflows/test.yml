@@ -1,0 +1,33 @@
+name: Java Unit Tests
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' 
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Run tests with Gradle
+        run: | 
+          chmod +x gradlew
+          ./gradlew test
+
+      - name: Upload test reports
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests
+            **/build/test-results
